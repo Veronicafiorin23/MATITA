@@ -27,7 +27,7 @@ jobs:
           test -n "$SUPABASE_URL" || (echo "Missing repository variable SUPABASE_URL" && exit 1)
           test -n "$SUPABASE_PUBLISHABLE_KEY" || (echo "Missing repository secret SUPABASE_PUBLISHABLE_KEY" && exit 1)
           mkdir dist
-          cp index.html app.js dist/
+          cp index.html app.js Provas_Completas_ITA.pdf Mapa_Questoes_ITA_2011-2025.pdf dist/
           node scripts/write-config.mjs > dist/config.js
           touch dist/.nojekyll
       - uses: actions/upload-pages-artifact@v3
