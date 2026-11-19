@@ -18,7 +18,7 @@
   <div id="appRoot" class="shell">
     <aside class="side">
       <div class="brand"><div class="brandmark">∑</div><div class="brandtext"><strong>MATITA</strong><small>Biblioteca compartilhada</small></div></div>
-      <div><div class="navlabel">Workspace</div><nav class="nav"><button class="active" data-view="home"><span class="ni">⌂</span><span>Visão geral</span></button><button data-view="questions"><span class="ni">▤</span><span>Questões</span></button><button data-view="simulations"><span class="ni">◷</span><span>Simulados</span></button><button data-view="resolutions"><span class="ni">▧</span><span>Resoluções</span></button></nav></div>
+      <div><div class="navlabel">Workspace</div><nav class="nav"><button class="active" data-view="home"><span class="ni">⌂</span><span>Visão geral</span></button><button data-view="questions"><span class="ni">▤</span><span>Questões</span></button><button data-view="simulations"><span class="ni">◷</span><span>Simulados</span></button><button data-view="resolutions"><span class="ni">▧</span><span>Resoluções</span></button><button data-view="handouts"><span class="ni">▣</span><span>Apostilas</span></button></nav></div>
       <div class="sidebottom">Salvamento automático na nuvem.<br>O progresso é igual para todos os visitantes.</div>
     </aside>
     <main class="main"><div class="top"><div class="crumb">Biblioteca <span class="muted">/</span> <b id="crumb">Visão geral</b></div><div style="display:flex;align-items:center;gap:10px"><span class="muted" style="font-size:11px">Espaço compartilhado</span></div></div>
@@ -27,6 +27,7 @@
         <section class="view" id="questions"><div class="head"><div><div class="eyebrow">Catálogo</div><h1>Questões</h1><div class="sub">429 de Matemática e 90 de Inglês; uma questão de Inglês está anulada.</div></div></div><div class="toolbar"><input class="field" id="qsearch" placeholder="Buscar prova, ano ou assunto"><select class="field" id="qdiscipline"><option value="">Todas as disciplinas</option><option>Matemática</option><option>Inglês</option></select><select class="field" id="qpriority"><option value="">Todas as prioridades</option><option>Verde</option><option>Azul</option><option>Amarelo</option><option>Especial</option></select><select class="field" id="qstatus"><option value="">Todos os status</option><option value="open">Não resolvidas</option><option value="done">Resolvidas</option></select></div><div class="card tablewrap"><table class="qtable"><thead><tr><th>Questão</th><th>Assunto</th><th>Prova</th><th>Prioridade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="questionRows"></tbody></table><div id="questionEmpty" class="empty hide">Não há questões para este filtro.</div></div></section>
         <section class="view" id="simulations"><div class="head"><div><div class="eyebrow">Prática individual</div><h1>Simulados</h1><div class="sub">O sorteio considera os simulados e as questões resolvidas por todos os visitantes.</div></div><button class="btn green" id="createSim">＋ Criar simulado</button></div><div id="simulationList"></div></section>
         <section class="view" id="resolutions"><div class="head"><div><div class="eyebrow">Progresso compartilhado</div><h1>Resoluções</h1><div class="sub">Resoluções compartilhadas vinculadas às questões.</div></div></div><div id="resolutionList" class="grid2"></div></section>
+        <section class="view" id="handouts"><div class="head"><div><div class="eyebrow">Biblioteca de estudo</div><h1>Apostilas</h1><div class="sub">Organize módulos por assunto e prioridade, com vários PDFs em cada apostila.</div></div><button class="btn green" id="createModule">＋ Criar apostila</button></div><div class="callout" style="margin-bottom:14px">Envie apenas arquivos PDF de até 20 MB. O assunto específico informado será o título do PDF na biblioteca. Os módulos e arquivos são compartilhados publicamente.</div><div id="handoutList" class="grid2"></div></section>
         
       </div>
     </main>
@@ -35,6 +36,6 @@
   <div class="pdfviewer" id="pdfViewer" onclick="if(event.target===this)closePdfViewer()"><div class="pdfbox"><div class="pdfbar"><strong id="pdfTitle">Documento</strong><a id="pdfExternal" href="#" target="_blank" rel="noopener">Abrir em outra aba ↗</a><button onclick="closePdfViewer()">Fechar ✕</button></div><iframe id="pdfFrame" title="Documento da biblioteca"></iframe></div></div>
   <div id="toast" class="toast"></div>
   <script src="./config.js"></script>
-  <script type="module" src="./app.js?v=7007cca"></script>
+  <script type="module" src="./app.js?v=apostilas-1"></script>
 </body>
 </html>
