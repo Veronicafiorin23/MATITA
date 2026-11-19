@@ -68,7 +68,18 @@ create policy "public reads shared simulation questions" on public.simulation_qu
 drop policy if exists "public creates shared simulation questions" on public.simulation_questions;
 create policy "public creates shared simulation questions" on public.simulation_questions for insert to anon,authenticated with check(user_id='00000000-0000-4000-8000-000000000001'::uuid);
 
-alter publication supabase_realtime add table public.question_progress, public.simulations, public.simulation_questions;
+do $matita$
+declare t text;
+begin
+  foreach t in array array['question_progress','simulations','simulation_questions','study_modules','study_pdfs'] loop
+    if not exists (
+      select 1 from pg_catalog.pg_publication_tables
+      where pubname='supabase_realtime' and schemaname='public' and tablename=t
+    ) then
+      execute pg_catalog.format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $matita$;
 
 create or replace function public.create_simulation(p_discipline text,p_count integer)
 returns uuid language plpgsql security invoker set search_path='' as $$
@@ -124,3 +135,51 @@ create policy "public updates shared resolutions" on storage.objects for update 
 drop policy if exists "public deletes shared resolutions" on storage.objects;
 create policy "public deletes shared resolutions" on storage.objects for delete to anon,authenticated using(bucket_id='user-resolutions' and (storage.foldername(name))[1]='shared');
 
+
+
+-- Shared study handouts: modules and public PDF files, maximum 20 MiB per file.
+create table if not exists public.study_modules (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null check(user_id='00000000-0000-4000-8000-000000000001'::uuid),
+  title text not null check(char_length(btrim(title)) between 1 and 120),
+  subject text not null check(subject in ('Álgebra','Geometria','Cálculo','Combinatória','Matrizes e determinantes','Trigonometria','Probabilidade','Estatística','Sequências e séries','Compreensão e gramática')),
+  priority text not null check(priority in ('Verde','Azul','Amarelo','Especial')),
+  created_at timestamptz not null default now()
+);
+create table if not exists public.study_pdfs (
+  id uuid primary key default gen_random_uuid(),
+  module_id uuid not null references public.study_modules(id) on delete cascade,
+  user_id uuid not null check(user_id='00000000-0000-4000-8000-000000000001'::uuid),
+  title text not null check(char_length(btrim(title)) between 1 and 160),
+  object_path text not null unique,
+  file_size bigint not null check(file_size between 1 and 20971520),
+  mime_type text not null check(mime_type='application/pdf'),
+  created_at timestamptz not null default now()
+);
+create index if not exists study_pdfs_module_idx on public.study_pdfs(module_id,created_at);
+alter table public.study_modules enable row level security;
+alter table public.study_pdfs enable row level security;
+revoke all on public.study_modules,public.study_pdfs from anon,authenticated;
+grant select,insert on public.study_modules,public.study_pdfs to anon,authenticated;
+drop policy if exists "public reads shared study modules" on public.study_modules;
+create policy "public reads shared study modules" on public.study_modules for select to anon,authenticated using(user_id='00000000-0000-4000-8000-000000000001'::uuid);
+drop policy if exists "public creates shared study modules" on public.study_modules;
+create policy "public creates shared study modules" on public.study_modules for insert to anon,authenticated with check(user_id='00000000-0000-4000-8000-000000000001'::uuid);
+drop policy if exists "public reads shared study pdfs" on public.study_pdfs;
+create policy "public reads shared study pdfs" on public.study_pdfs for select to anon,authenticated using(user_id='00000000-0000-4000-8000-000000000001'::uuid);
+drop policy if exists "public creates shared study pdfs" on public.study_pdfs;
+create policy "public creates shared study pdfs" on public.study_pdfs for insert to anon,authenticated with check(
+  user_id='00000000-0000-4000-8000-000000000001'::uuid
+  and exists(select 1 from public.study_modules m where m.id=module_id and m.user_id='00000000-0000-4000-8000-000000000001'::uuid)
+);
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
+values('study-handouts','study-handouts',true,20971520,array['application/pdf'])
+on conflict(id) do update set public=excluded.public,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
+drop policy if exists "public uploads shared study pdfs" on storage.objects;
+create policy "public uploads shared study pdfs" on storage.objects for insert to anon,authenticated with check(
+  bucket_id='study-handouts'
+  and (storage.foldername(name))[1]='shared'
+  and array_length(storage.foldername(name),1)=2
+  and lower(name) like '%.pdf'
+  and exists(select 1 from public.study_modules m where m.id::text=(storage.foldername(name))[2] and m.user_id='00000000-0000-4000-8000-000000000001'::uuid)
+);
