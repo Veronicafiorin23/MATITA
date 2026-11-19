@@ -107,7 +107,6 @@ grant execute on function public.create_simulation(text,integer) to anon,authent
 
 -- Source PDFs are public. Resolutions are also public, and any visitor can replace them.
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values
- ('proof-pdfs','proof-pdfs',true,26214400,array['application/pdf']),
  ('user-resolutions','user-resolutions',true,20971520,array['application/pdf','image/jpeg','image/png','image/webp'])
 on conflict(id) do update set public=excluded.public,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
 
