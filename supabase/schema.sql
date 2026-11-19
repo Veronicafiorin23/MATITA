@@ -49,6 +49,7 @@ alter table public.simulation_questions enable row level security;
 revoke all on public.question_catalog,public.question_progress,public.simulations,public.simulation_questions from anon,authenticated;
 grant select on public.question_catalog,public.question_progress,public.simulations,public.simulation_questions to anon,authenticated;
 grant insert,update on public.question_progress to anon,authenticated;
+grant insert on public.simulations,public.simulation_questions to anon,authenticated;
 
 drop policy if exists "public reads question catalog" on public.question_catalog;
 create policy "public reads question catalog" on public.question_catalog for select to anon,authenticated using(true);
@@ -60,11 +61,17 @@ drop policy if exists "public updates shared progress" on public.question_progre
 create policy "public updates shared progress" on public.question_progress for update to anon,authenticated using(user_id='00000000-0000-4000-8000-000000000001'::uuid) with check(user_id='00000000-0000-4000-8000-000000000001'::uuid);
 drop policy if exists "public reads shared simulations" on public.simulations;
 create policy "public reads shared simulations" on public.simulations for select to anon,authenticated using(user_id='00000000-0000-4000-8000-000000000001'::uuid);
+drop policy if exists "public creates shared simulations" on public.simulations;
+create policy "public creates shared simulations" on public.simulations for insert to anon,authenticated with check(user_id='00000000-0000-4000-8000-000000000001'::uuid);
 drop policy if exists "public reads shared simulation questions" on public.simulation_questions;
 create policy "public reads shared simulation questions" on public.simulation_questions for select to anon,authenticated using(user_id='00000000-0000-4000-8000-000000000001'::uuid);
+drop policy if exists "public creates shared simulation questions" on public.simulation_questions;
+create policy "public creates shared simulation questions" on public.simulation_questions for insert to anon,authenticated with check(user_id='00000000-0000-4000-8000-000000000001'::uuid);
+
+alter publication supabase_realtime add table public.question_progress, public.simulations, public.simulation_questions;
 
 create or replace function public.create_simulation(p_discipline text,p_count integer)
-returns uuid language plpgsql security definer set search_path='' as $$
+returns uuid language plpgsql security invoker set search_path='' as $$
 declare
   v_user_id constant uuid := '00000000-0000-4000-8000-000000000001';
   v_simulation_id uuid;
@@ -98,7 +105,7 @@ begin
     order by pg_catalog.random() limit p_count;
   end if;
   get diagnostics v_inserted=row_count;
-  if v_inserted=0 then delete from public.simulations where id=v_simulation_id; raise exception 'no new questions available for this discipline'; end if;
+  if v_inserted=0 then raise exception 'no new questions available for this discipline'; end if;
   return v_simulation_id;
 end;
 $$;
