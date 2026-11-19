@@ -1,0 +1,45 @@
+name: Publish MATITA to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Prepare site
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$SUPABASE_URL" || (echo "Missing repository variable SUPABASE_URL" && exit 1)
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || (echo "Missing repository secret SUPABASE_PUBLISHABLE_KEY" && exit 1)
+          mkdir dist
+          cp index.html app.js dist/
+          node scripts/write-config.mjs > dist/config.js
+          touch dist/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
